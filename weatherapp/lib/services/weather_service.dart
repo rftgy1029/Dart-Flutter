@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/weather_models.dart';
 
@@ -313,10 +314,18 @@ class WeatherService {
       'ny': ny.toString(),
     });
 
-    final ncstResponse = await _client.get(ncstUri);
+    var ncstUriToSend = ncstUri;
+    var vilageUriToSend = vilageUri;
+
+    if (kIsWeb) {
+      ncstUriToSend = Uri.parse('https://api.allorigins.win/raw?url=${Uri.encodeComponent(ncstUri.toString())}');
+      vilageUriToSend = Uri.parse('https://api.allorigins.win/raw?url=${Uri.encodeComponent(vilageUri.toString())}');
+    }
+
+    final ncstResponse = await _client.get(ncstUriToSend);
     _validateKmaResponse(ncstResponse);
 
-    final vilageResponse = await _client.get(vilageUri);
+    final vilageResponse = await _client.get(vilageUriToSend);
     _validateKmaResponse(vilageResponse);
 
     final ncstJson = jsonDecode(ncstResponse.body) as Map<String, dynamic>;
