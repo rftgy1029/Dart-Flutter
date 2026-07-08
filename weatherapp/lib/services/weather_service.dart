@@ -68,11 +68,11 @@ class WeatherService {
 
   final http.Client _client;
 
-  static const String _apiKeyPrefsKey = 'kma_api_service_key';
-  
-  //기에 공공데이터포털(data.go.kr)에서 발급받은 기상청 API 서비스키를 입력할 수 있습니다.
-  //인코딩되지 않은 Decoding 키 입력을 권장합니다.
-  static String serviceKey = '042d21234294c93136fb3ea51c0ff3f89c78e525fc4486f991a8e533381a1bc4';
+  // 기상청 API 서비스키 (환경 변수 또는 디폴트 값 사용)
+  static const String serviceKey = String.fromEnvironment(
+    'KMA_SERVICE_KEY',
+    defaultValue: '042d21234294c93136fb3ea51c0ff3f89c78e525fc4486f991a8e533381a1bc4',
+  );
 
   static const City seoul = City(
     name: 'Seoul',
@@ -81,24 +81,6 @@ class WeatherService {
     latitude: 37.566,
     longitude: 126.9784,
   );
-
-  static Future<void> loadSavedServiceKey() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final key = prefs.getString(_apiKeyPrefsKey);
-      if (key != null && key.isNotEmpty) {
-        serviceKey = key;
-      }
-    } catch (_) {}
-  }
-
-  static Future<void> saveServiceKey(String key) async {
-    serviceKey = key;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_apiKeyPrefsKey, key);
-    } catch (_) {}
-  }
 
   Future<List<City>> searchCities(String query) async {
     final trimmedQuery = query.trim();
@@ -202,6 +184,7 @@ class WeatherService {
       ),
       hourly: _parseHourly(hourly),
       daily: _parseDaily(daily),
+      dataSource: 'openmetro api',
     );
   }
 
@@ -282,6 +265,7 @@ class WeatherService {
         );
       }),
       timezone: 'Asia/Seoul',
+      dataSource: 'openmetro api',
     );
   }
 
@@ -623,6 +607,7 @@ class WeatherService {
       hourly: mergedHourly,
       daily: mergedDaily,
       timezone: '기상청 (KMA) & Open-Meteo',
+      dataSource: '기상청 api',
     );
   }
 

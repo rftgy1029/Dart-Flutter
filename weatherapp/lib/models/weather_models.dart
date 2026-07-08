@@ -40,6 +40,7 @@ class WeatherForecast {
     required this.hourly,
     required this.daily,
     required this.timezone,
+    required this.dataSource,
   });
 
   final City city;
@@ -47,6 +48,7 @@ class WeatherForecast {
   final List<HourlyWeather> hourly;
   final List<DailyWeather> daily;
   final String timezone;
+  final String dataSource;
 }
 
 class CurrentWeather {

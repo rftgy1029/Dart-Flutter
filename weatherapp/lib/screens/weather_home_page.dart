@@ -29,8 +29,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
   }
 
   Future<void> _initializeAndLoad() async {
-    await WeatherService.loadSavedServiceKey();
-    if (!mounted) return;
     _loadForecast(widget.initialCity);
   }
 
@@ -108,65 +106,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
     });
   }
 
-  void _showApiKeyDialog() {
-    final controller = TextEditingController(
-      text: WeatherService.serviceKey == 'YOUR_API_KEY_HERE' ? '' : WeatherService.serviceKey,
-    );
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('기상청 API 인증키 설정'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '공공데이터포털(data.go.kr)에서 발급받은 기상청 단기예보 서비스의 일반 인증키(Decoding)를 입력해 주세요.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                decoration: const InputDecoration(
-                  labelText: '서비스 키 (Service Key)',
-                  hintText: 'Decoding 키 입력을 권장합니다.',
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                '※ 입력하지 않거나 기본값일 경우 Open-Meteo API 데이터로 대체됩니다.',
-                style: TextStyle(fontSize: 11, color: Color(0xFFD97706), fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('취소'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final key = controller.text.trim();
-                final navigator = Navigator.of(context);
-                await WeatherService.saveServiceKey(key.isEmpty ? 'YOUR_API_KEY_HERE' : key);
-                navigator.pop();
-                if (!mounted) return;
-                final forecast = _forecast;
-                if (forecast != null) {
-                  _loadForecast(forecast.city);
-                } else {
-                  _loadForecast(widget.initialCity);
-                }
-              },
-              child: const Text('저장 및 적용'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final forecast = _forecast;
@@ -177,11 +116,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
         centerTitle: false,
         backgroundColor: Colors.transparent,
         actions: [
-          IconButton(
-            tooltip: '인증키 설정',
-            onPressed: _showApiKeyDialog,
-            icon: const Icon(Icons.key_rounded),
-          ),
           IconButton(
             tooltip: '새로고침',
             onPressed: forecast == null
@@ -221,10 +155,6 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                               _loadForecast(city);
                             },
                           ),
-                          if (WeatherService.serviceKey == 'YOUR_API_KEY_HERE' || WeatherService.serviceKey.isEmpty) ...[
-                            const SizedBox(height: 16),
-                            _KmaKeyWarningPanel(onSettingsPressed: _showApiKeyDialog),
-                          ],
                           const SizedBox(height: 16),
                           if (_error != null) ...[
                             _ErrorPanel(
@@ -245,6 +175,21 @@ class _WeatherHomePageState extends State<WeatherHomePage> {
                             _HourlyForecastSection(hours: forecast.hourly),
                             const SizedBox(height: 16),
                             _DailyForecastSection(days: forecast.daily),
+                            const SizedBox(height: 20),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: Text(
+                                  forecast.dataSource,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF70757A),
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ],
                       ),
@@ -951,43 +896,4 @@ String formatDay(DateTime date) {
   return '${date.month}/${date.day} ${weekdays[date.weekday - 1]}';
 }
 
-class _KmaKeyWarningPanel extends StatelessWidget {
-  const _KmaKeyWarningPanel({required this.onSettingsPressed});
 
-  final VoidCallback onSettingsPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFFFEF3C7),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: Color(0xFFFDE68A)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            const Icon(Icons.info_outline_rounded, color: Color(0xFFD97706)),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                '기상청 API 인증키가 등록되지 않았습니다. 현재는 Open-Meteo API 데이터로 제공되고 있습니다.',
-                style: TextStyle(color: Color(0xFF92400E), fontSize: 13),
-              ),
-            ),
-            const SizedBox(width: 8),
-            TextButton.icon(
-              onPressed: onSettingsPressed,
-              icon: const Icon(Icons.key_rounded, size: 16, color: Color(0xFFD97706)),
-              label: const Text(
-                '설정',
-                style: TextStyle(color: Color(0xFFD97706), fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
