@@ -152,7 +152,10 @@ class WeatherService {
       final kmaData = await _fetchKmaForecast(grid.nx, grid.ny);
       return _mergeKmaForecast(baseForecast, kmaData);
     } catch (e) {
-      rethrow;
+      // 웹 환경에서의 CORS 또는 Mixed Content 오류 등으로 기상청 API 호출이 실패할 경우,
+      // 앱이 완전히 멈추지 않도록 Open-Meteo 예보(baseForecast)를 반환하는 폴백(Fallback)을 적용합니다.
+      print('기상청 API 호출 실패 (Open-Meteo 데이터로 대체): $e');
+      return baseForecast;
     }
   }
 
@@ -288,7 +291,7 @@ class WeatherService {
     final ncstParams = _getUltraSrtNcstDateTime(kst);
     final vilageParams = _getVilageFcstDateTime(kst);
 
-    final ncstUri = Uri.http('apis.data.go.kr', '/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst', {
+    final ncstUri = Uri.https('apis.data.go.kr', '/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst', {
       'serviceKey': serviceKey,
       'pageNo': '1',
       'numOfRows': '10',
@@ -299,7 +302,7 @@ class WeatherService {
       'ny': ny.toString(),
     });
 
-    final vilageUri = Uri.http('apis.data.go.kr', '/1360000/VilageFcstInfoService_2.0/getVilageFcst', {
+    final vilageUri = Uri.https('apis.data.go.kr', '/1360000/VilageFcstInfoService_2.0/getVilageFcst', {
       'serviceKey': serviceKey,
       'pageNo': '1',
       'numOfRows': '1000', // 충분한 범위 확보
