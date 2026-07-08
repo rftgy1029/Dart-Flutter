@@ -28,7 +28,7 @@ jobs:
       - name: Build Web
         run: |
           cd weatherapp
-          flutter build web --release --base-href "/weatherApp-flutter/"
+          flutter build web --release --base-href "/Dart-Flutter/"
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
