@@ -167,15 +167,24 @@ class WeatherService {
     var vilageUriToSend = vilageUri;
 
     if (kIsWeb) {
-      ncstUriToSend = Uri.parse('https://api.allorigins.win/raw?url=${Uri.encodeComponent(ncstUri.toString())}');
-      vilageUriToSend = Uri.parse('https://api.allorigins.win/raw?url=${Uri.encodeComponent(vilageUri.toString())}');
+      ncstUriToSend = Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent(ncstUri.toString())}');
+      vilageUriToSend = Uri.parse('https://corsproxy.io/?url=${Uri.encodeComponent(vilageUri.toString())}');
     }
 
-    final ncstResponse = await _client.get(ncstUriToSend);
-    _validateKmaResponse(ncstResponse);
+    final http.Response ncstResponse;
+    final http.Response vilageResponse;
+    try {
+      ncstResponse = await _client.get(ncstUriToSend);
+      _validateKmaResponse(ncstResponse);
 
-    final vilageResponse = await _client.get(vilageUriToSend);
-    _validateKmaResponse(vilageResponse);
+      vilageResponse = await _client.get(vilageUriToSend);
+      _validateKmaResponse(vilageResponse);
+    } catch (e) {
+      if (e is WeatherException) {
+        rethrow;
+      }
+      throw WeatherException('기상청 서버 연결에 실패했습니다. (CORS 프록시 오류 또는 네트워크 장애) 상세: $e');
+    }
 
     final ncstJson = jsonDecode(ncstResponse.body) as Map<String, dynamic>;
     final vilageJson = jsonDecode(vilageResponse.body) as Map<String, dynamic>;
