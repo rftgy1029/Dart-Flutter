@@ -113,160 +113,25 @@ class WeatherService {
         city.longitude >= 123.0 &&
         city.longitude <= 133.0;
 
-    // 1. Open-Meteo 예보를 기본 베이스로 가져옴 (7일치 일기예보 및 타임존 확보용)
-    WeatherForecast baseForecast;
-    try {
-      baseForecast = await _fetchOpenMeteoForecast(city);
-    } catch (e) {
-      if (!isInKorea || serviceKey.isEmpty || serviceKey == 'YOUR_API_KEY_HERE') {
-        rethrow;
-      }
-      baseForecast = _createDummyForecast(city);
+    if (!isInKorea) {
+      throw WeatherException('기상청 날씨 예보는 대한민국 영토 내 지역만 조회할 수 있습니다.');
     }
 
-    // 2. 대한민국 지역이 아니거나 기상청 API 키가 입력되지 않은 경우 Open-Meteo 데이터를 그대로 노출
-    if (!isInKorea || serviceKey.isEmpty || serviceKey == 'YOUR_API_KEY_HERE') {
-      return baseForecast;
-    }
-
-    // 3. 기상청 API 호출 및 데이터 병합
     try {
       final grid = latLngToGrid(city.latitude, city.longitude);
       final kmaData = await _fetchKmaForecast(grid.nx, grid.ny);
-      return _mergeKmaForecast(baseForecast, kmaData);
+      
+      return WeatherForecast(
+        city: city,
+        current: kmaData.current,
+        hourly: kmaData.hourly,
+        daily: kmaData.daily,
+        timezone: 'Asia/Seoul',
+        dataSource: '기상청 api',
+      );
     } catch (e) {
-      // 웹 환경에서의 CORS 또는 Mixed Content 오류 등으로 기상청 API 호출이 실패할 경우,
-      // 앱이 완전히 멈추지 않도록 Open-Meteo 예보(baseForecast)를 반환하는 폴백(Fallback)을 적용합니다.
-      print('기상청 API 호출 실패 (Open-Meteo 데이터로 대체): $e');
-      return baseForecast;
+      throw WeatherException('기상청 날씨 정보를 불러오지 못했어요. 상세 오류: $e');
     }
-  }
-
-  Future<WeatherForecast> _fetchOpenMeteoForecast(City city) async {
-    final uri = Uri.https('api.open-meteo.com', '/v1/forecast', {
-      'latitude': city.latitude.toString(),
-      'longitude': city.longitude.toString(),
-      'current':
-          'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m',
-      'hourly': 'temperature_2m,precipitation_probability,weather_code',
-      'daily':
-          'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max',
-      'timezone': 'auto',
-      'forecast_days': '7',
-    });
-
-    final response = await _client.get(uri);
-    if (response.statusCode != 200) {
-      throw WeatherException('날씨 정보를 불러오지 못했어요. 네트워크를 확인해 주세요.');
-    }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return _parseForecast(city, json);
-  }
-
-  WeatherForecast _parseForecast(City city, Map<String, dynamic> json) {
-    final current = json['current'] as Map<String, dynamic>;
-    final hourly = json['hourly'] as Map<String, dynamic>;
-    final daily = json['daily'] as Map<String, dynamic>;
-
-    return WeatherForecast(
-      city: city,
-      timezone: json['timezone'] as String? ?? 'Local',
-      current: CurrentWeather(
-        time: DateTime.parse(current['time'] as String),
-        temperature: _doubleAt(current, 'temperature_2m'),
-        apparentTemperature: _doubleAt(current, 'apparent_temperature'),
-        humidity: _intAt(current, 'relative_humidity_2m'),
-        precipitation: _doubleAt(current, 'precipitation'),
-        weatherCode: _intAt(current, 'weather_code'),
-        windSpeed: _doubleAt(current, 'wind_speed_10m'),
-        isDay: _intAt(current, 'is_day') == 1,
-      ),
-      hourly: _parseHourly(hourly),
-      daily: _parseDaily(daily),
-      dataSource: 'openmetro api',
-    );
-  }
-
-  List<HourlyWeather> _parseHourly(Map<String, dynamic> hourly) {
-    final times = hourly['time'] as List<dynamic>;
-    final temperatures = hourly['temperature_2m'] as List<dynamic>;
-    final probabilities = hourly['precipitation_probability'] as List<dynamic>;
-    final codes = hourly['weather_code'] as List<dynamic>;
-
-    final now = DateTime.now();
-    final items = <HourlyWeather>[];
-
-    for (var index = 0; index < times.length; index++) {
-      final time = DateTime.parse(times[index] as String);
-      if (time.isBefore(now.subtract(const Duration(hours: 1)))) {
-        continue;
-      }
-
-      items.add(
-        HourlyWeather(
-          time: time,
-          temperature: (temperatures[index] as num).toDouble(),
-          precipitationProbability:
-              (probabilities[index] as num?)?.toInt() ?? 0,
-          weatherCode: (codes[index] as num).toInt(),
-        ),
-      );
-
-      if (items.length == 12) {
-        break;
-      }
-    }
-
-    return items;
-  }
-
-  List<DailyWeather> _parseDaily(Map<String, dynamic> daily) {
-    final dates = daily['time'] as List<dynamic>;
-    final maxTemps = daily['temperature_2m_max'] as List<dynamic>;
-    final minTemps = daily['temperature_2m_min'] as List<dynamic>;
-    final probabilities =
-        daily['precipitation_probability_max'] as List<dynamic>;
-    final codes = daily['weather_code'] as List<dynamic>;
-
-    return List.generate(dates.length, (index) {
-      return DailyWeather(
-        date: DateTime.parse(dates[index] as String),
-        maxTemperature: (maxTemps[index] as num).toDouble(),
-        minTemperature: (minTemps[index] as num).toDouble(),
-        precipitationProbability: (probabilities[index] as num?)?.toInt() ?? 0,
-        weatherCode: (codes[index] as num).toInt(),
-      );
-    });
-  }
-
-  WeatherForecast _createDummyForecast(City city) {
-    final now = DateTime.now();
-    return WeatherForecast(
-      city: city,
-      current: CurrentWeather(
-        time: now,
-        temperature: 0.0,
-        apparentTemperature: 0.0,
-        humidity: 0,
-        precipitation: 0.0,
-        weatherCode: 0,
-        windSpeed: 0.0,
-        isDay: true,
-      ),
-      hourly: const [],
-      daily: List.generate(7, (index) {
-        return DailyWeather(
-          date: now.add(Duration(days: index)),
-          maxTemperature: 0.0,
-          minTemperature: 0.0,
-          precipitationProbability: 0,
-          weatherCode: 0,
-        );
-      }),
-      timezone: 'Asia/Seoul',
-      dataSource: 'openmetro api',
-    );
   }
 
   // 기상청 API 호출
@@ -492,16 +357,22 @@ class WeatherService {
     }
     final currentWeatherCode = _mapKmaToWmoCode(currentSky, pty ?? 0);
 
+    final currentTemp = t1h ?? 0.0;
+    final currentWind = wsd ?? 0.0;
+    final currentHumidity = reh ?? 0;
+    final currentApparent = _calculateApparentTemperature(currentTemp, currentWind, currentHumidity);
+    final isDayTime = kst.hour >= 6 && kst.hour < 18;
+
     return KmaData(
       current: CurrentWeather(
         time: kst,
-        temperature: t1h ?? 0.0,
-        apparentTemperature: t1h ?? 0.0,
-        humidity: reh ?? 0,
+        temperature: currentTemp,
+        apparentTemperature: currentApparent,
+        humidity: currentHumidity,
         precipitation: rn1 ?? 0.0,
         weatherCode: currentWeatherCode,
-        windSpeed: wsd ?? 0.0,
-        isDay: true,
+        windSpeed: currentWind * 3.6, // m/s -> km/h
+        isDay: isDayTime,
       ),
       hourly: limitedHourly,
       daily: dailyForecasts,
@@ -562,54 +433,7 @@ class WeatherService {
     return t;
   }
 
-  WeatherForecast _mergeKmaForecast(WeatherForecast base, KmaData kma) {
-    final currentTemp = kma.current.temperature;
-    final currentWind = kma.current.windSpeed;
-    final currentHumidity = kma.current.humidity;
 
-    final currentApparent = _calculateApparentTemperature(currentTemp, currentWind, currentHumidity);
-
-    final mergedCurrent = CurrentWeather(
-      time: base.current.time,
-      temperature: currentTemp,
-      apparentTemperature: currentApparent,
-      humidity: currentHumidity,
-      precipitation: kma.current.precipitation,
-      weatherCode: kma.current.weatherCode,
-      windSpeed: currentWind * 3.6, // km/h 단위로 UI 전달
-      isDay: base.current.isDay,
-    );
-
-    final mergedHourly = kma.hourly.isEmpty ? base.hourly : kma.hourly;
-
-    final mergedDaily = List<DailyWeather>.from(base.daily);
-    for (int i = 0; i < mergedDaily.length; i++) {
-      final baseDate = mergedDaily[i].date;
-      final kmaDaily = kma.daily.firstWhere(
-        (kd) => kd.date.year == baseDate.year && kd.date.month == baseDate.month && kd.date.day == baseDate.day,
-        orElse: () => mergedDaily[i],
-      );
-
-      if (kmaDaily != mergedDaily[i]) {
-        mergedDaily[i] = DailyWeather(
-          date: baseDate,
-          maxTemperature: kmaDaily.maxTemperature,
-          minTemperature: kmaDaily.minTemperature,
-          precipitationProbability: kmaDaily.precipitationProbability,
-          weatherCode: kmaDaily.weatherCode,
-        );
-      }
-    }
-
-    return WeatherForecast(
-      city: base.city,
-      current: mergedCurrent,
-      hourly: mergedHourly,
-      daily: mergedDaily,
-      timezone: '기상청 (KMA) & Open-Meteo',
-      dataSource: '기상청 api',
-    );
-  }
 
   Map<String, String> _getUltraSrtNcstDateTime(DateTime kst) {
     DateTime target = kst;
