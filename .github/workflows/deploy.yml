@@ -21,17 +21,17 @@ jobs:
           channel: 'stable'
 
       - name: Install dependencies
-        run: |
-          cd weatherapp
-          flutter pub get
+        run: flutter pub get
+        working-directory: weatherapp # 의존성 설치를 weatherapp 폴더에서 실행
 
       - name: Build Web
-        run: |
-          cd weatherapp
-          flutter build web --release --base-href "/Dart-Flutter/"
+        # 레포지토리 이름 대소문자(Dart-Flutter)를 정확히 반영
+        run: flutter build web --release --base-href "/Dart-Flutter/"
+        working-directory: weatherapp # 빌드를 weatherapp 폴더에서 실행
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: weatherapp/build/web
+          folder: weatherapp/build/web # 빌드 결과물이 있는 정확한 경로
           branch: gh-pages
+          clean: true
