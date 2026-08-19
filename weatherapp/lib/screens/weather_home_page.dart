@@ -273,10 +273,7 @@ class _SearchPanel extends StatelessWidget {
           decoration: InputDecoration(
             hintText: '도시 검색 (예: 서울, Tokyo)',
             hintStyle: const TextStyle(color: Color(0xFF80868B)),
-            prefixIcon: const Icon(
-              Icons.search_rounded,
-              color: Color(0xFF5F6368),
-            ),
+            prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF5F6368)),
             suffixIcon: isSearching
                 ? const Padding(
                     padding: EdgeInsets.all(16),
@@ -287,10 +284,7 @@ class _SearchPanel extends StatelessWidget {
                     ),
                   )
                 : IconButton(
-                    icon: const Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Color(0xFF1A73E8),
-                    ),
+                    icon: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF1A73E8)),
                     onPressed: onSearch,
                   ),
           ),
@@ -304,18 +298,10 @@ class _SearchPanel extends StatelessWidget {
               runSpacing: 8,
               children: suggestions.map((city) {
                 return ActionChip(
-                  avatar: const Icon(
-                    Icons.location_on_outlined,
-                    size: 16,
-                    color: Color(0xFF5F6368),
-                  ),
+                  avatar: const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF5F6368)),
                   label: Text(
                     city.displayName,
-                    style: const TextStyle(
-                      color: Color(0xFF3C4043),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: const TextStyle(color: Color(0xFF3C4043), fontSize: 13, fontWeight: FontWeight.w500),
                   ),
                   backgroundColor: Colors.white,
                   surfaceTintColor: Colors.transparent,
@@ -355,9 +341,7 @@ class _CurrentWeatherPanel extends StatelessWidget {
     } else if (code == 3 || code == 45 || code == 48) {
       // Cloudy / Foggy
       colors = const [Color(0xFFE9EDF0), Color(0xFFCFD8DC)];
-    } else if (code >= 51 && code <= 67 ||
-        code >= 80 && code <= 86 ||
-        code >= 95) {
+    } else if (code >= 51 && code <= 67 || code >= 80 && code <= 86 || code >= 95) {
       // Rainy / Stormy
       colors = const [Color(0xFFD4E3FC), Color(0xFFB0C4DE)];
     } else if (code >= 71 && code <= 77) {
@@ -369,9 +353,7 @@ class _CurrentWeatherPanel extends StatelessWidget {
 
     final isDarkBackground = !current.isDay;
     final textColor = isDarkBackground ? Colors.white : const Color(0xFF202124);
-    final secondaryTextColor = isDarkBackground
-        ? Colors.white70
-        : const Color(0xFF5F6368);
+    final secondaryTextColor = isDarkBackground ? Colors.white70 : const Color(0xFF5F6368);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
@@ -384,7 +366,7 @@ class _CurrentWeatherPanel extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -404,15 +386,11 @@ class _CurrentWeatherPanel extends StatelessWidget {
           );
 
           final details = Column(
-            crossAxisAlignment: compact
-                ? CrossAxisAlignment.start
-                : CrossAxisAlignment.end,
+            crossAxisAlignment: compact ? CrossAxisAlignment.start : CrossAxisAlignment.end,
             children: [
               Icon(
                 weatherIcon(current.weatherCode),
-                color: isDarkBackground
-                    ? Colors.white
-                    : const Color(0xFF1A73E8),
+                color: isDarkBackground ? Colors.white : const Color(0xFF1A73E8),
                 size: compact ? 64 : 80,
               ),
               const SizedBox(height: 8),
@@ -426,10 +404,7 @@ class _CurrentWeatherPanel extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '체감 온도 ${current.apparentTemperature.round()}°',
-                style: TextStyle(
-                  color: secondaryTextColor,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: TextStyle(color: secondaryTextColor, fontWeight: FontWeight.w500),
               ),
             ],
           );
@@ -519,11 +494,7 @@ class _PlaceTitle extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           '${formatDateTime(forecast.current.time)} · ${forecast.timezone}',
-          style: TextStyle(
-            color: secondaryTextColor,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
+          style: TextStyle(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -606,7 +577,7 @@ class _MetricItem extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: color.withValues(alpha: 0.08),
+              backgroundColor: color.withOpacity(0.08), // standard withOpacity for compatibility
               child: Icon(icon, color: color, size: 22),
             ),
             const SizedBox(width: 14),
@@ -755,10 +726,7 @@ class _DailyForecastSection extends StatelessWidget {
               return Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     child: Row(
                       children: [
                         SizedBox(
@@ -912,7 +880,7 @@ class _LoadingOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Positioned.fill(
       child: DecoratedBox(
-        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.18)),
+        decoration: BoxDecoration(color: Colors.black.withOpacity(0.18)),
         child: Center(
           child: Card(
             child: Padding(

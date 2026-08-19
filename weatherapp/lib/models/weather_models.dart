@@ -51,7 +51,13 @@ class City {
           longitude == other.longitude;
 
   @override
-  int get hashCode => Object.hash(name, country, admin1, latitude, longitude);
+  int get hashCode => Object.hash(
+    name,
+    country,
+    admin1,
+    latitude,
+    longitude,
+  );
 }
 
 class WeatherForecast {

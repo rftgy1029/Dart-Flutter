@@ -50,10 +50,7 @@ PY
 
   mkdir -p "$(dirname "$FLUTTER_HOME")"
   rm -rf "$FLUTTER_HOME"
-  # Release archives may contain the publisher's numeric uid/gid. Keeping those
-  # owners makes Git reject the SDK as an unsafe repository in root containers.
-  tar --extract --xz --no-same-owner --file "$archive" \
-    --directory "$(dirname "$FLUTTER_HOME")"
+  tar --extract --xz --file "$archive" --directory "$(dirname "$FLUTTER_HOME")"
 else
   echo "[2/5] 기존 Flutter SDK를 사용합니다: $FLUTTER_HOME"
   echo "[3/5] SDK 다운로드를 건너뜁니다."
