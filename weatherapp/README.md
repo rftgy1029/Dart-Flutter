@@ -47,6 +47,33 @@ flutter test
 별도의 API 키는 필요하지 않습니다. 도시 검색은 Open-Meteo Geocoding API,
 날씨 정보는 Open-Meteo Forecast API에서 가져옵니다.
 
+## APK 배포
+
+`v`로 시작하는 태그를 푸시하면 GitHub Actions(`.github/workflows/release-apk.yml`)가
+테스트 후 APK를 빌드해 GitHub Release에 `weatherapp.apk`로 올립니다. 태그의 숫자가
+앱 버전(versionName)이 됩니다.
+
+```sh
+git checkout main && git pull
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+다른 사람에게는 항상 최신 버전을 받는 아래 링크를 공유하면 됩니다.
+
+https://github.com/rftgy1029/Dart-Flutter/releases/latest/download/weatherapp.apk
+
+받는 사람 안내:
+
+- Android 전용입니다. iPhone에는 설치할 수 없습니다.
+- 다운로드한 파일을 열고 "출처를 알 수 없는 앱" 설치를 허용해 주세요.
+- Play 프로텍트 경고가 나오면 "세부정보 → 무시하고 설치"를 누르세요.
+- 디버그 키로 서명하므로 빌드마다 서명이 달라집니다. 새 버전을 설치하려면 기존
+  앱을 먼저 삭제해야 합니다.
+
+Actions 탭에서 **Release APK** 워크플로를 수동 실행하면 Release 없이 빌드
+결과물(artifact)만 받을 수 있습니다.
+
 ## 앱 아이콘
 
 PR 시스템에서 바이너리 패치를 처리할 수 있도록 저장소에는 PNG/ICO 대신
