@@ -1,0 +1,63 @@
+name: Release APK
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: weatherapp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          # Keep in sync with .claude/hooks/session-start.sh so pubspec.lock matches.
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build APK
+        run: |
+          args=(--release --build-number=${{ github.run_number }})
+          # Tag pushes (v1.2.3) set the app version; manual runs keep pubspec.yaml's.
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            args+=(--build-name="${GITHUB_REF_NAME#v}")
+          fi
+          flutter build apk "${args[@]}"
+          cp build/app/outputs/flutter-apk/app-release.apk build/weatherapp.apk
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weatherapp-apk
+          path: weatherapp/build/weatherapp.apk
+
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: weatherapp/build/weatherapp.apk
+          generate_release_notes: true
