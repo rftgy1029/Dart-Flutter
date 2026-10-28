@@ -37,6 +37,17 @@ flutter run
 flutter build web --release
 ```
 
+## 웹 버전
+
+main 브랜치에 `weatherapp/` 변경이 푸시되면 GitHub Actions(`.github/workflows/deploy-web.yml`)가
+웹 버전을 빌드해 GitHub Pages에 배포합니다. PR에서는 빌드만 확인하고 배포하지 않습니다.
+
+https://rftgy1029.github.io/Dart-Flutter/
+
+처음 한 번은 저장소 **Settings → Pages → Build and deployment → Source**를
+**GitHub Actions**로 설정해야 합니다. Actions 탭에서 **Deploy Web** 워크플로를 수동
+실행해 다시 배포할 수도 있습니다.
+
 ## 품질 검사
 
 ```sh
@@ -47,11 +58,11 @@ flutter test
 별도의 API 키는 필요하지 않습니다. 도시 검색은 Open-Meteo Geocoding API,
 날씨 정보는 Open-Meteo Forecast API에서 가져옵니다.
 
-## APK 배포
+## 배포 (Android APK · macOS 앱)
 
 `v`로 시작하는 태그를 푸시하면 GitHub Actions(`.github/workflows/release-apk.yml`)가
-테스트 후 APK를 빌드해 GitHub Release에 `weatherapp.apk`로 올립니다. 태그의 숫자가
-앱 버전(versionName)이 됩니다.
+테스트 후 Android APK와 macOS 앱을 빌드해 GitHub Release에 `weatherapp.apk`,
+`weatherapp-macos.zip`으로 올립니다. 태그의 숫자가 앱 버전이 됩니다.
 
 ```sh
 git checkout main && git pull
@@ -71,7 +82,19 @@ https://github.com/rftgy1029/Dart-Flutter/releases/latest/download/weatherapp.ap
 - 디버그 키로 서명하므로 빌드마다 서명이 달라집니다. 새 버전을 설치하려면 기존
   앱을 먼저 삭제해야 합니다.
 
-Actions 탭에서 **Release APK** 워크플로를 수동 실행하면 Release 없이 빌드
+macOS 앱은 아래 링크로 받을 수 있습니다.
+
+https://github.com/rftgy1029/Dart-Flutter/releases/latest/download/weatherapp-macos.zip
+
+macOS 받는 사람 안내:
+
+- Apple 개발자 인증서 없이 임시(ad-hoc) 서명된 앱이라 처음 열 때 경고가 나옵니다.
+- zip을 풀고 `weatherapp.app`을 응용 프로그램 폴더로 옮긴 뒤 한 번 열어 보세요.
+  막히면 "시스템 설정 → 개인정보 보호 및 보안"에서 "그래도 열기"를 누르세요.
+- 그래도 열리지 않으면 터미널에서 `xattr -cr /Applications/weatherapp.app`을
+  실행한 뒤 다시 여세요.
+
+Actions 탭에서 **Release** 워크플로를 수동 실행하면 Release 없이 빌드
 결과물(artifact)만 받을 수 있습니다.
 
 ## 앱 아이콘

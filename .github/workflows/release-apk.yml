@@ -1,4 +1,4 @@
-name: Release APK
+name: Release
 
 on:
   push:
@@ -8,6 +8,10 @@ on:
 
 permissions:
   contents: write
+
+env:
+  # Keep in sync with .claude/hooks/session-start.sh so pubspec.lock matches.
+  FLUTTER_VERSION: '3.47.6'
 
 jobs:
   build-apk:
@@ -28,8 +32,7 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          # Keep in sync with .claude/hooks/session-start.sh so pubspec.lock matches.
-          flutter-version: '3.47.6'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
 
@@ -55,9 +58,57 @@ jobs:
           name: weatherapp-apk
           path: weatherapp/build/weatherapp.apk
 
+  build-macos:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: weatherapp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS app
+        run: |
+          args=(--release --build-number=${{ github.run_number }})
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            args+=(--build-name="${GITHUB_REF_NAME#v}")
+          fi
+          flutter build macos "${args[@]}"
+          # ditto keeps the bundle's symlinks and ad-hoc signature intact; plain zip breaks them.
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/macos/Build/Products/Release/weatherapp.app build/weatherapp-macos.zip
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weatherapp-macos
+          path: weatherapp/build/weatherapp-macos.zip
+
+  publish:
+    if: github.ref_type == 'tag'
+    needs: [build-apk, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
       - name: Publish GitHub Release
-        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          files: weatherapp/build/weatherapp.apk
+          files: |
+            dist/weatherapp.apk
+            dist/weatherapp-macos.zip
           generate_release_notes: true
