@@ -37,6 +37,17 @@ flutter run
 flutter build web --release
 ```
 
+## 웹 버전
+
+main 브랜치에 `weatherapp/` 변경이 푸시되면 GitHub Actions(`.github/workflows/deploy-web.yml`)가
+웹 버전을 빌드해 GitHub Pages에 배포합니다. PR에서는 빌드만 확인하고 배포하지 않습니다.
+
+https://rftgy1029.github.io/Dart-Flutter/
+
+처음 한 번은 저장소 **Settings → Pages → Build and deployment → Source**를
+**GitHub Actions**로 설정해야 합니다. Actions 탭에서 **Deploy Web** 워크플로를 수동
+실행해 다시 배포할 수도 있습니다.
+
 ## 품질 검사
 
 ```sh
